@@ -1,7 +1,7 @@
 package com.swarn.components.data
 
-import androidx.lifecycle.LiveData
 import androidx.room.*
+import io.reactivex.Flowable
 
 
 /**
@@ -10,7 +10,7 @@ import androidx.room.*
 
 @Dao
 interface NoteDao {
-    @Insert
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insert(note: Note)
 
     @Update
@@ -23,5 +23,5 @@ interface NoteDao {
     fun deleteAllNotes()
 
     @Query("SELECT * FROM note_table ORDER BY priority DESC")
-    fun getAllNotes(): LiveData<List<Note>>
+    fun getAllNotes(): Flowable<List<Note>>
 }

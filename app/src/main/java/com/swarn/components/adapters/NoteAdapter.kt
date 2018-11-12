@@ -1,12 +1,12 @@
 package com.swarn.components.adapters
 
+import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.recyclerview.widget.RecyclerView
 import android.widget.TextView
+import androidx.recyclerview.widget.RecyclerView
 import com.swarn.components.R
 import com.swarn.components.data.Note
-import android.view.LayoutInflater
 
 /**
  * @author Swarn Singh.

@@ -1,34 +1,45 @@
 package com.swarn.components.ui
 
 import android.app.Activity
+import android.content.Intent
 import android.os.Bundle
+import android.util.Log
+import android.view.Menu
+import android.view.MenuItem
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.swarn.components.R
-import com.swarn.components.viewmodels.NoteViewModel
-import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
-import com.swarn.components.data.Note
-import com.swarn.components.adapters.NoteAdapter
+import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import android.content.Intent
-import android.view.Menu
 import com.google.android.material.floatingactionbutton.FloatingActionButton
-import android.widget.Toast
-import android.view.MenuItem
-import androidx.recyclerview.widget.ItemTouchHelper
+import com.swarn.components.R
+import com.swarn.components.adapters.NoteAdapter
+import com.swarn.components.data.Note
+import com.swarn.components.viewmodels.NoteViewModel
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.disposables.CompositeDisposable
+import io.reactivex.schedulers.Schedulers
 
 /**
  * @author Swarn Singh.
  */
 class MainActivity : AppCompatActivity() {
 
-
     private var noteViewModel: NoteViewModel? = null
+
+    private val disposable = CompositeDisposable()
 
     companion object {
         const val ADD_NOTE_REQUEST = 1
         const val EDIT_NOTE_REQUEST = 2
+        private val TAG = MainActivity::class.java.simpleName
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+
+        disposable.clear()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -52,9 +63,16 @@ class MainActivity : AppCompatActivity() {
 
         noteViewModel = ViewModelProviders.of(this).get(NoteViewModel::class.java)
 
-        noteViewModel?.getAllNotes()?.observe(this, Observer<List<Note>> {
-            adapter.setNotes(it)
-        })
+        /* noteViewModel?.getAllNotes()?.observe(this, Observer<List<Note>> {
+             adapter.setNotes(it)
+         })*/
+
+        disposable.add(noteViewModel?.getAllNotes()
+                ?.subscribeOn(Schedulers.io())
+                ?.observeOn(AndroidSchedulers.mainThread())
+                ?.subscribe({ adapter.setNotes(it) },
+                        { error -> Log.e(TAG, "Unable to get Notes", error) })!!)
+
 
         val simpleItemTouchCallback = object : ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT) {
             override fun onMove(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder, target: RecyclerView.ViewHolder): Boolean {
@@ -62,8 +80,14 @@ class MainActivity : AppCompatActivity() {
             }
 
             override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
-                noteViewModel?.delete(adapter.notes[viewHolder.adapterPosition])
-                Toast.makeText(applicationContext, "Note deleted", Toast.LENGTH_SHORT).show()
+                val note: Note = adapter.notes[viewHolder.adapterPosition]
+
+                disposable.add(noteViewModel?.delete(note)
+                        ?.subscribeOn(Schedulers.io())
+                        ?.observeOn(AndroidSchedulers.mainThread())
+                        ?.subscribe()!!)
+
+                Toast.makeText(applicationContext, "${note.title} deleted", Toast.LENGTH_SHORT).show()
             }
         }
 
@@ -91,9 +115,12 @@ class MainActivity : AppCompatActivity() {
             val priority = data.getIntExtra(AddNoteActivity.EXTRA_PRIORITY, 1)
 
             val note = Note(title, description, priority)
-            noteViewModel?.insert(note)
 
-            Toast.makeText(this, "Note saved", Toast.LENGTH_SHORT).show()
+            disposable.add(noteViewModel?.insert(note)
+                    ?.subscribeOn(Schedulers.io())
+                    ?.observeOn(AndroidSchedulers.mainThread())
+                    ?.subscribe { Toast.makeText(this, "Note saved", Toast.LENGTH_SHORT).show() }!!)
+
         } else if (requestCode == EDIT_NOTE_REQUEST && resultCode == RESULT_OK) {
             val id = data!!.getIntExtra(AddNoteActivity.EXTRA_ID, -1)
 
@@ -108,11 +135,15 @@ class MainActivity : AppCompatActivity() {
 
             val note = Note(title, description, priority)
             note.id = id
-            noteViewModel?.update(note)
 
-            Toast.makeText(this, "Note updated", Toast.LENGTH_SHORT).show();
+            disposable.add(noteViewModel?.update(note)
+                    ?.subscribeOn(Schedulers.io())
+                    ?.observeOn(AndroidSchedulers.mainThread())
+                    ?.subscribe { Toast.makeText(this, "Note updated", Toast.LENGTH_SHORT).show() }!!)
+
+
         } else {
-            Toast.makeText(this, "Note not saved", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Note not saved", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -125,8 +156,10 @@ class MainActivity : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             R.id.delete_all_notes -> {
-                noteViewModel?.deleteAllNotes()
-                Toast.makeText(this, "All notes deleted", Toast.LENGTH_SHORT).show()
+                disposable.add(noteViewModel?.deleteAllNotes()
+                        ?.subscribeOn(Schedulers.io())
+                        ?.observeOn(AndroidSchedulers.mainThread())
+                        ?.subscribe { Toast.makeText(this, "All notes deleted", Toast.LENGTH_SHORT).show() }!!)
                 true
             }
             else -> super.onOptionsItemSelected(item)

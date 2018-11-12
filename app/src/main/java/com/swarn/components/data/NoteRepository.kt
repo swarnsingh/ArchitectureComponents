@@ -1,8 +1,8 @@
 package com.swarn.components.data
 
 import android.app.Application
-import android.os.AsyncTask
-import androidx.lifecycle.LiveData
+import io.reactivex.Completable
+import io.reactivex.Flowable
 
 /**
  * @author Swarn Singh.
@@ -10,7 +10,7 @@ import androidx.lifecycle.LiveData
 class NoteRepository {
 
     private var noteDao: NoteDao? = null
-    private var allNotes: LiveData<List<Note>>? = null
+    private var allNotes: Flowable<List<Note>>? = null
 
     constructor(application: Application) {
         val database = NoteDatabase.getInstance(application)
@@ -18,55 +18,31 @@ class NoteRepository {
         allNotes = noteDao?.getAllNotes()
     }
 
-    fun insert(note: Note) {
-        InsertNoteAsyncTask(noteDao).execute(note)
-    }
-
-    fun update(note: Note) {
-        UpdateNoteAsyncTask(noteDao).execute(note)
-    }
-
-    fun delete(note: Note) {
-        DeleteNoteAsyncTask(noteDao).execute(note)
-    }
-
-    fun deleteAllNotes() {
-        DeleteAllNotesAsyncTask(noteDao).execute()
-    }
-
-    fun getAllNotes(): LiveData<List<Note>>? {
-        return allNotes
-    }
-
-    private class InsertNoteAsyncTask constructor(private val noteDao: NoteDao?) : AsyncTask<Note, Void, Void>() {
-
-        override fun doInBackground(vararg notes: Note): Void? {
-            noteDao?.insert(notes[0])
-            return null
+    fun insert(note: Note): Completable? {
+        return Completable.fromAction {
+            noteDao?.insert(note)
         }
     }
 
-    private class UpdateNoteAsyncTask constructor(private val noteDao: NoteDao?) : AsyncTask<Note, Void, Void>() {
-
-        override fun doInBackground(vararg notes: Note): Void? {
-            noteDao?.update(notes[0])
-            return null
+    fun update(note: Note): Completable? {
+        return Completable.fromAction {
+            noteDao?.update(note)
         }
     }
 
-    private class DeleteNoteAsyncTask constructor(private val noteDao: NoteDao?) : AsyncTask<Note, Void, Void>() {
-
-        override fun doInBackground(vararg notes: Note): Void? {
-            noteDao?.delete(notes[0])
-            return null
+    fun delete(note: Note): Completable? {
+        return Completable.fromAction {
+            noteDao?.delete(note)
         }
     }
 
-    private class DeleteAllNotesAsyncTask constructor(private val noteDao: NoteDao?) : AsyncTask<Void, Void, Void>() {
-
-        override fun doInBackground(vararg voids: Void): Void? {
+    fun deleteAllNotes(): Completable? {
+        return Completable.fromAction {
             noteDao?.deleteAllNotes()
-            return null
         }
+    }
+
+    fun getAllNotes(): Flowable<List<Note>>? {
+        return allNotes
     }
 }

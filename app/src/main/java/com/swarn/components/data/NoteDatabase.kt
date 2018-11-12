@@ -1,11 +1,11 @@
 package com.swarn.components.data
 
 import android.content.Context
-import androidx.room.Database
-import androidx.room.RoomDatabase
-import androidx.room.Room
-import androidx.sqlite.db.SupportSQLiteDatabase
 import android.os.AsyncTask
+import androidx.room.Database
+import androidx.room.Room
+import androidx.room.RoomDatabase
+import androidx.sqlite.db.SupportSQLiteDatabase
 
 
 /**
@@ -33,6 +33,7 @@ abstract class NoteDatabase : RoomDatabase() {
             if (instance == null) {
                 instance = Room.databaseBuilder(context, NoteDatabase::class.java, DATABASE_NAME)
                         .fallbackToDestructiveMigration()
+                        .allowMainThreadQueries()
                         .addCallback(roomCallback)
                         .build()
             }

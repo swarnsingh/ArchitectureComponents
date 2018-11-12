@@ -2,9 +2,10 @@ package com.swarn.components.viewmodels
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.LiveData
 import com.swarn.components.data.Note
 import com.swarn.components.data.NoteRepository
+import io.reactivex.Completable
+import io.reactivex.Flowable
 
 
 /**
@@ -12,30 +13,30 @@ import com.swarn.components.data.NoteRepository
  */
 class NoteViewModel(application: Application) : AndroidViewModel(application) {
     private val repository: NoteRepository?
-    private val allNotes: LiveData<List<Note>>?
+    private val allNotes: Flowable<List<Note>>?
 
     init {
         repository = NoteRepository(application)
         allNotes = repository.getAllNotes()
     }
 
-    fun insert(note: Note) {
-        repository?.insert(note)
+    fun insert(note: Note): Completable? {
+        return repository?.insert(note)
     }
 
-    fun update(note: Note) {
-        repository?.update(note)
+    fun update(note: Note): Completable? {
+        return repository?.update(note)
     }
 
-    fun delete(note: Note) {
-        repository?.delete(note)
+    fun delete(note: Note): Completable? {
+        return repository?.delete(note)
     }
 
-    fun deleteAllNotes() {
-        repository?.deleteAllNotes()
+    fun deleteAllNotes(): Completable? {
+        return repository?.deleteAllNotes()
     }
 
-    fun getAllNotes(): LiveData<List<Note>>? {
+    fun getAllNotes(): Flowable<List<Note>>? {
         return allNotes
     }
 }
